@@ -1,0 +1,6 @@
+.env
+.bundle/
+vendor/bundle/
+*.gem
+.byebug_history
+tmp/
