@@ -4,3 +4,6 @@ vendor/bundle/
 *.gem
 .byebug_history
 tmp/
+
+# lemans bench run output
+runs/

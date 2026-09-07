@@ -2,6 +2,7 @@ version: 1
 
 environment:
   backend: docker
+  dockerfile: ../Dockerfile
   resources:
     cpus: 2
     memory: 2GB
@@ -12,6 +13,7 @@ environment:
 
 agent:
   name: oracle
+  model: none
   timeout: 30m
   step_limit: 100
   cost_limit: 5.0
