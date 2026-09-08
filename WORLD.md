@@ -21,11 +21,9 @@ automates the distillation and nothing else.
 
 ## Direction
 
-- The extraction prompt is the product. It was validated across books, MIT
-  OCW courses, and a production Rails codebase (agent training program,
-  THESIS.md claims 7-12). A change to the prompt or framing earns its place
-  with a before/after on at least one of those corpora, and the proposal
-  says what moved.
+- The extraction prompt is the product.  A change to the prompt or framing earns its place
+  with a before/after on real source material, and the proposal says what
+  moved.
 - Provenance is a feature, not a courtesy. Every shaped skill records its
   source, model, framing, and timestamp. Anything that weakens that record
   is a regression.
@@ -33,9 +31,9 @@ automates the distillation and nothing else.
   constraints before it is written. When the spec moves, lens moves with it.
 - The README's "what lens does NOT do (yet)" list is the roadmap, in this
   order: multi-file corpora, then quality eval and re-cast, then composition
-  of several corpora into one lens. PDF and EPUB extraction stay upstream in
-  the agent training program's pre-processors. Auto-publishing to a
-  marketplace stays off the list entirely.
+  of several corpora into one lens. PDF and EPUB extraction stay upstream,
+  outside lens's scope. Auto-publishing to a marketplace stays off the list
+  entirely.
 - Each module does one thing (Shape, Validator, SkillWriter). New capability
   arrives as a new module alongside them, not as a branch inside an existing
   one.
@@ -47,7 +45,7 @@ automates the distillation and nothing else.
   a test.
 - Three runtime dependencies (ruby_llm, dotenv, thor). Adding a fourth needs
   a reason the existing three cannot cover.
-- Ruby 3.2 is the floor. Raising it is the maintainer's call.
+- Ruby 4.0 is the floor. Raising it is the maintainer's call.
 - The gem is not yet published to rubygems.org. Versions, CHANGELOG release
   headings, and `gem push` are the maintainer's alone. The agent never
   publishes, tags, or releases.
