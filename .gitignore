@@ -4,3 +4,4 @@ vendor/bundle/
 *.gem
 .byebug_history
 tmp/
+/bench/runs/
