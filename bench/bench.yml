@@ -2,7 +2,6 @@ version: 1
 
 environment:
   backend: docker
-  dockerfile: ../Dockerfile
   resources:
     cpus: 2
     memory: 2GB
