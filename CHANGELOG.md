@@ -6,6 +6,12 @@ project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Ruby 4.0 is now the minimum supported version (`required_ruby_version`
+  `>= 4.0.0`), matching the project charter. The gemspec previously accepted
+  Ruby 3.2+ even though the bench and lockfile already assumed 4.0 (#4).
+
 ## [0.1.0] — 2026-06-11
 
 Initial release.
