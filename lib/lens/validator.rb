@@ -7,12 +7,10 @@ module Lens
   module Validator
     class InvalidName < StandardError; end
     class InvalidDescription < StandardError; end
-    class InvalidLicense < StandardError; end
 
     NAME_RE = /\A[a-z0-9]+(-[a-z0-9]+)*\z/.freeze
     NAME_MAX = 64
     DESCRIPTION_MAX = 1024
-    COMPATIBILITY_MAX = 500
 
     # Per agentskills.io spec:
     #   - 1-64 characters
@@ -32,11 +30,6 @@ module Lens
       stripped = description.strip
       raise InvalidDescription, "description is empty" if stripped.empty?
       raise InvalidDescription, "description must be at most #{DESCRIPTION_MAX} characters (#{description.length})" if description.length > DESCRIPTION_MAX
-    end
-
-    def self.validate_compatibility!(compatibility)
-      return if compatibility.nil? || compatibility.empty?
-      raise StandardError, "compatibility must be at most #{COMPATIBILITY_MAX} characters" if compatibility.length > COMPATIBILITY_MAX
     end
   end
 end
