@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "digest"
 require "thor"
 require "dotenv"
 
@@ -92,6 +93,7 @@ module Lens
         license: options[:license],
         framing: options[:framing],
         source_path: corpus_path,
+        source_sha256: Digest::SHA256.hexdigest(corpus),
         model: options[:model]
       )
 

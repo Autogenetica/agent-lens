@@ -6,6 +6,13 @@ project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- `docs/PROVENANCE.md` now identifies the source corpus by basename plus a
+  SHA-256 of its content instead of the absolute path typed at cast time.
+  The hash pins the exact source wherever it lived; the path shipped the
+  author's filesystem layout inside every published skill (#7).
+
 ## [0.1.0] — 2026-06-11
 
 Initial release.
