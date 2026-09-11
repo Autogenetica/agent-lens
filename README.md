@@ -19,7 +19,7 @@ focal points.
 gem install agent-lens
 ```
 
-Requires Ruby ≥ 3.2 and an `ANTHROPIC_API_KEY` (a `.env` file in the current
+Requires Ruby ≥ 4.0 and an `ANTHROPIC_API_KEY` (a `.env` file in the current
 directory works; copy `.env.example` to start).
 
 ## Use
