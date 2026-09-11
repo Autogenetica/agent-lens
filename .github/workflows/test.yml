@@ -1,0 +1,43 @@
+# WORLD.md, Constraints: "There is no CI yet. The first automation this repo
+# needs is a test run across the supported Rubies with no secrets in the
+# environment." This is that run, and nothing more: no publish, no release,
+# no key. The guard step fails the build if a key ever leaks into the job.
+name: test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Ruby ${{ matrix.ruby }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Ruby 4.0 is the floor (WORLD.md). `head` is an early warning for the
+        # next Ruby, not a gate: it may fail without failing the build.
+        ruby: ["4.0"]
+        include:
+          - ruby: head
+            experimental: true
+    continue-on-error: ${{ matrix.experimental == true }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - name: Assert the suite runs with no model key and no .env
+        run: |
+          if [ -n "${ANTHROPIC_API_KEY:-}" ]; then
+            echo "ANTHROPIC_API_KEY is set in CI; the test suite must run offline (WORLD.md)"; exit 1
+          fi
+          if [ -e .env ]; then
+            echo ".env is present in the CI checkout; keys never ship in the repo (WORLD.md)"; exit 1
+          fi
+      - name: Run tests
+        run: bundle exec rake test
