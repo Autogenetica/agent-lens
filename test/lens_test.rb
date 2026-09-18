@@ -137,7 +137,40 @@ class LensSkillWriterTest < Minitest::Test
 
     provenance = File.read(paths[:provenance_path])
     assert_match(/Provenance — test-skill/, provenance)
-    assert_match(%r{/path/to/source\.md}, provenance)
+    assert_match(/\*\*Source corpus:\*\* `source\.md`/, provenance)
+    refute_match(%r{/path/to/source\.md}, provenance, "must not record the absolute corpus path")
+  end
+
+  def test_provenance_records_corpus_sha256
+    corpus_path = File.join(@tmp_dir, "corpus.md")
+    File.write(corpus_path, "Sandi says: small objects.\n")
+    expected = Digest::SHA256.file(corpus_path).hexdigest
+
+    writer = Lens::SkillWriter.new(
+      output_dir: @output_dir,
+      name: "test-skill",
+      description: "A test skill for verifying the writer records a content hash in the provenance file.",
+      body: "1. **Test item** — MUST verify: something.",
+      source_path: corpus_path
+    )
+    provenance = File.read(writer.write[:provenance_path])
+
+    assert_match(/\*\*Source corpus:\*\* `corpus\.md` \(sha256: `#{expected}`\)/, provenance)
+    refute_match(Regexp.new(Regexp.escape(@tmp_dir)), provenance, "must not leak the temp dir")
+  end
+
+  def test_provenance_prefers_explicit_sha256_over_reading_the_file
+    writer = Lens::SkillWriter.new(
+      output_dir: @output_dir,
+      name: "test-skill",
+      description: "A test skill for verifying an explicit sha256 wins over hashing the path.",
+      body: "1. **Test item** — MUST verify: something.",
+      source_path: "/nowhere/source.md",
+      source_sha256: "abc123"
+    )
+    provenance = File.read(writer.write[:provenance_path])
+
+    assert_match(/`source\.md` \(sha256: `abc123`\)/, provenance)
   end
 
   def test_rejects_invalid_name_at_write_time

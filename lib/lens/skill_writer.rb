@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "digest"
 require "fileutils"
 require "time"
 
@@ -16,7 +17,7 @@ module Lens
       on it (e.g., *"Per **<item name>**, I'd suggest..."*).
     HEADER
 
-    def initialize(output_dir:, name:, description:, body:, license: "Pending review", framing: nil, source_path: nil, model: nil)
+    def initialize(output_dir:, name:, description:, body:, license: "Pending review", framing: nil, source_path: nil, source_sha256: nil, model: nil)
       @output_dir = output_dir
       @name = name
       @description = description
@@ -24,6 +25,7 @@ module Lens
       @license = license
       @framing = framing
       @source_path = source_path
+      @source_sha256 = source_sha256
       @model = model
     end
 
@@ -74,7 +76,7 @@ module Lens
 
         - **Shaped by:** [agent-lens](https://github.com/Autogenetica/agent-lens) v#{Lens::VERSION}
         - **Shaped at:** #{Time.now.utc.iso8601}
-        - **Source corpus:** `#{@source_path || "(unknown)"}`
+        - **Source corpus:** #{render_source_corpus}
         - **Model:** `#{@model || "unknown"}`
         - **Framing:** #{@framing ? "`#{@framing}`" : "(default)"}
 
@@ -100,6 +102,24 @@ module Lens
     def source_basename
       return "unknown" if @source_path.nil?
       File.basename(@source_path.to_s)
+    end
+
+    # PROVENANCE.md identifies the corpus by basename + content hash, never by
+    # the absolute path the author typed at cast time: the hash pins the exact
+    # source regardless of where it lived, and the path would ship the
+    # author's filesystem layout inside a published skill (#7).
+    def render_source_corpus
+      return "(unknown)" if @source_path.nil?
+
+      sha = source_sha256
+      sha ? "`#{source_basename}` (sha256: `#{sha}`)" : "`#{source_basename}`"
+    end
+
+    def source_sha256
+      return @source_sha256 if @source_sha256
+      return nil unless @source_path && File.file?(@source_path.to_s)
+
+      Digest::SHA256.file(@source_path.to_s).hexdigest
     end
 
     def title_case(slug)
