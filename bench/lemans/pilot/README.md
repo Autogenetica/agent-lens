@@ -38,5 +38,23 @@ cost line after the smoke run and after the first arm.
 
 Pair rows by task name. Beyond pass@k, the metric the lens is actually
 targeting is Rails-API reach (did the agent use the framework's own API or
-hand-roll it?); that readout is tracked separately and reads the same run
-directories.
+hand-roll it?). `reach.rb` reads the same run directories and adds that axis:
+
+```sh
+ruby bench/lemans/pilot/reach.rb                          # baseline vs lensed
+ruby bench/lemans/pilot/reach.rb fable=path/to/runs/model  # any run dirs
+```
+
+Per trial it checks whether the task's `rails_anchor` (the API the reference
+solution turns on, from the task frontmatter, copied into `result.json`)
+appears on a line the agent added in `agent.patch`. Same rule on both arms,
+so the arm-to-arm delta is honest even where the absolute number is not:
+anchors that name a concept rather than a token (`callable_cache_key`,
+`commit_transaction_on_non_local_return`) always read as misses, and an
+anchor in a comment reads as a hit. Read the patch when a row looks odd.
+
+Calibration against the published Fable 5.1 run in ai-evals: the pass column
+reproduces the 58/63 the Rails Foundation reported; reach reads 38/63 (60%)
+where their judge-scored readout said 41%. The gap is the concept anchors
+above. Treat reach here as a within-pilot comparison, not a leaderboard
+number.
