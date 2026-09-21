@@ -10,7 +10,7 @@ the proposal is wrong.
 Status: PROPOSED. Drafted 2026-09-03 as a seven-section charter. Restructured
 2026-09-19 under the six headings every repo in the fleet now shares, so a loop
 session or a portfolio pass finds the same answer in the same place in every
-repo. Awaiting maintainer approval.
+repo. Revised 2026-09-21 after maintainer review. Awaiting approval.
 
 ## VISION (where we hope this goes)
 
@@ -35,13 +35,15 @@ automates the distillation and nothing else.
 
 ## CONSTITUTION (what rules we must obey)
 
-The fleet's shared rules live in one place and this file links to them rather
-than pasting: the [operator's constitution](https://github.com/minerva-sky/workspace/blob/master/WORLD.md#constitution-what-rules-we-must-obey).
-That covers the autonomy ladder (L0 propose in an issue, L1 open a PR the
-maintainer merges, L2 merge after a quiet period on green CI, L3 merge on green
-CI and report in a digest), how a class gets promoted (maintainer approval on
-the acceptance record) and demoted (any revert, immediately), and the rule that
-gem releases and version bumps are the maintainer's alone.
+The rules this repo obeys, stated here so nothing outside the repo has to be
+read to know them:
+
+- Every change class has an autonomy level. L0: propose in an issue. L1: open
+  a PR the maintainer merges. L2: merge after a quiet period on green CI. L3:
+  merge on green CI and report in a digest. Every class starts at L0 or L1.
+- A class moves up only by maintainer approval, recorded on the issue or PR
+  that asked for it. Any revert moves it back down, immediately.
+- Gem releases and version bumps are the maintainer's alone.
 
 Local additions for agent-lens:
 
@@ -69,7 +71,7 @@ Local additions for agent-lens:
 - The extraction prompt, the default model, and anything touching the gemspec
   or release process stay at L0 regardless of track record.
 
-Anti-goals, which are constraints wearing a different hat:
+### Anti-goals
 
 - Not a general prompt-engineering toolkit. One corpus in, one skill out.
 - Not a marketplace and not a publisher. Drop the output directory where
@@ -85,20 +87,22 @@ Anti-goals, which are constraints wearing a different hat:
 
 ## ROADMAP (what next)
 
-The README's "what lens does NOT do (yet)" list is the roadmap. This is that
-list as an order, with the reason for the order.
+The roadmap lives in GitHub, not here: one milestone per item, in order, at
+<https://github.com/Autogenetica/agent-lens/milestones>. Issues attach to the
+milestone they advance. This section keeps only the ordering and the reasons,
+because those change slower than the work.
 
-1. CI. There is none on main yet, and the first automation this repo needs is
-   a test run across the supported Rubies with no secrets in the environment.
-   Everything below lands faster once a red check can say no.
-2. Multi-file corpora. Today the workaround is concatenating files by hand;
+1. Multi-file corpora. Today the workaround is concatenating files by hand;
    the pipeline should accept a directory.
-3. Quality eval and re-cast. A shaped skill needs a way to be scored against
+2. Quality eval and re-cast. A shaped skill needs a way to be scored against
    its source and re-shaped when it falls short. This waits on the pilot
    readout, because the eval has to measure something we have already seen
    fail.
-4. Composition of several corpora into one lens. Last because it stacks on
+3. Composition of several corpora into one lens. Last because it stacks on
    both of the above: you cannot compose what you cannot evaluate.
+
+CI came first and is done: the suite runs on every push across the supported
+Rubies with no secrets in the environment.
 
 Off the list on purpose: PDF and EPUB extraction stay upstream in the agent
 training program's pre-processors, and auto-publishing to a marketplace stays
@@ -119,10 +123,10 @@ Improvements arrive as GitHub issues, labeled by origin and state:
   its final comment and is permanent institutional memory. Proposals must check
   closed and deferred issues before re-raising an idea.
 
-Each change class has an autonomy level per the constitution above. Every class
-starts at L0 or L1, and the current level per class is recorded on the
-operator's side, not here. The one-PR-a-week review budget applies on top of
-the ladder: an L1 class does not mean a PR a day.
+Each change class has an autonomy level per the constitution above, and the
+issue or PR that promoted a class is the record of its current level. The
+one-PR-a-week review budget applies on top of the ladder: an L1 class does not
+mean a PR a day.
 
 ## CHARTER (why this exists, what territory, what freedoms)
 
