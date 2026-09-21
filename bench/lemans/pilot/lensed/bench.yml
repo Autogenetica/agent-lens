@@ -7,7 +7,7 @@
 #   2. hosts  -> api.anthropic.com only.
 #   3. cost   -> $0.60 per trial, from the Fable run's ~$0.55/call shape.
 #                126 trials (42 tasks x 3 attempts) caps at ~$75 by config;
-#                the pilot ceiling Val set is $65, so stop at -k 3 and watch
+#                the pilot ceiling Minerva estimated is $65, so stop at -k 3 and watch
 #                `lemans report` cost after the first task sweep.
 #
 # tasks/ here are the lensify.rb output (instruction.md carries the Rails-idiom
