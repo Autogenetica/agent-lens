@@ -1,0 +1,6 @@
+# ai-evals task data and Docker sources are copied in by prepare.sh, never committed.
+baseline/tasks/
+baseline/docker/
+lensed/tasks/
+lensed/docker/
+*/runs/
