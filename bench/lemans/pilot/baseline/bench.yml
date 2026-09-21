@@ -19,6 +19,9 @@ version: 1
 
 environment:
   dockerfile: docker/writebook/Dockerfile
+  profiles:
+    fizzy:
+      dockerfile: docker/fizzy/Dockerfile
   resources:
     cpus: 2
     memory: 2GB
