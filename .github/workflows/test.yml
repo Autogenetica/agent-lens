@@ -27,6 +27,13 @@ jobs:
     continue-on-error: ${{ matrix.experimental == true }}
     steps:
       - uses: actions/checkout@v4
+      - name: Let ruby-head use its own bundled Bundler
+        # The head snapshot ships a newer default Bundler (4.1.0.beta1 as of
+        # 2026-09-22). Any BUNDLED WITH pin makes Bundler autoswitch to the
+        # pinned version, which then fails its default-gem version check
+        # (CorruptBundlerInstallError). Drop the pin on this leg only.
+        if: matrix.ruby == 'head'
+        run: sed -i -e '/^  bundler (/d' -e '/^BUNDLED WITH$/,+1d' Gemfile.lock
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
