@@ -31,12 +31,6 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
-          # ruby-head ships a Bundler that trips on Pathname::SEPARATOR_PAT
-          # (rubygems moved Pathname out of core, fixed in rubygems#9529).
-          # setup-ruby refuses `rubygems: latest` on head ("Ruby master
-          # builds use included RubyGems"), so install the latest released
-          # Bundler on that leg only; Ruby 4.0 keeps its default toolchain.
-          bundler: ${{ matrix.ruby == 'head' && 'latest' || 'default' }}
       - name: Assert the suite runs with no model key and no .env
         run: |
           if [ -n "${ANTHROPIC_API_KEY:-}" ]; then
