@@ -1,4 +1,4 @@
-# WORLD.md — project charter
+# WORLD.md: agent-lens, answered six ways
 
 This file sets direction for agent-lens: what it exists to do, what it will
 not become, and how proposed work gets judged. The maintainer (codenamev,
@@ -7,9 +7,23 @@ agent that helps maintain this project, reads this document before proposing
 anything and stays inside its fences. If a proposal conflicts with this file,
 the proposal is wrong.
 
-Status: PROPOSED. Drafted 2026-09-03, awaiting maintainer approval.
+Status: PROPOSED. Drafted 2026-09-03 as a seven-section charter. Restructured
+2026-09-19 under the six headings every repo in the fleet now shares, so a loop
+session or a portfolio pass finds the same answer in the same place in every
+repo. Revised 2026-09-21 after maintainer review. Awaiting approval.
 
-## Purpose
+## VISION (where we hope this goes)
+
+<!-- VAL: edit. Drafted from the old Purpose and Direction sections; the charter said what lens does and which way it leans, never where it ends up. -->
+
+An author hands lens the thing they know best and gets back a skill their
+coding agent will actually obey: RFC-2119 items, every one traceable to a
+page. The expert stays the expert. The distillation stops being an afternoon
+of prompt-wrangling and becomes one command. Not a prompt toolkit, not a
+marketplace. A lens: one corpus in, one focused thing out, and you can see
+where the light came from.
+
+## MISSION (what we're here to do)
 
 A small Ruby CLI that turns one opinionated corpus (a book, a course
 transcript, a codebase's canonical files, an internal SOP) into one
@@ -19,27 +33,28 @@ the items came from. The pipeline is a single LLM call with a validated
 framing. The source author stays the irreducible expert input; lens
 automates the distillation and nothing else.
 
-## Direction
+## CONSTITUTION (what rules we must obey)
 
-- The extraction prompt is the product.  A change to the prompt or framing earns its place
-  with a before/after on real source material, and the proposal says what
-  moved.
+The rules this repo obeys, stated here so nothing outside the repo has to be
+read to know them:
+
+- Every change class has an autonomy level. L0: propose in an issue. L1: open
+  a PR the maintainer merges. L2: merge after a quiet period on green CI. L3:
+  merge on green CI and report in a digest. Every class starts at L0 or L1.
+- A class moves up only by maintainer approval, recorded on the issue or PR
+  that asked for it. Any revert moves it back down, immediately.
+- Gem releases and version bumps are the maintainer's alone.
+
+Local additions for agent-lens:
+
+- The extraction prompt is the product. A change to the prompt or framing
+  earns its place with a before/after on real source material, and the
+  proposal says what moved.
 - Provenance is a feature, not a courtesy. Every shaped skill records its
   source, model, framing, and timestamp. Anything that weakens that record
   is a regression.
 - Spec compliance is non-negotiable. Output validates against agentskills.io
   constraints before it is written. When the spec moves, lens moves with it.
-- The README's "what lens does NOT do (yet)" list is the roadmap, in this
-  order: multi-file corpora, then quality eval and re-cast, then composition
-  of several corpora into one lens. PDF and EPUB extraction stay upstream,
-  outside lens's scope. Auto-publishing to a marketplace stays off the list
-  entirely.
-- Each module does one thing (Shape, Validator, SkillWriter). New capability
-  arrives as a new module alongside them, not as a branch inside an existing
-  one.
-
-## Constraints
-
 - The test suite runs offline. No network, no API key, no live model call in
   tests. Anything that needs a real completion is a manual eval script, not
   a test.
@@ -49,14 +64,14 @@ automates the distillation and nothing else.
 - The gem is not yet published to rubygems.org. Versions, CHANGELOG release
   headings, and `gem push` are the maintainer's alone. The agent never
   publishes, tags, or releases.
-- There is no CI yet. The first automation this repo needs is a test run
-  across the supported Rubies with no secrets in the environment.
 - Keys stay in `.env`, ignored by git, never in fixtures or examples beyond
   the placeholder in `.env.example`.
 - Review budget: the maintainer reviews at most one pull request a week from
   this repo. Proposals beyond that wait as issues.
+- The extraction prompt, the default model, and anything touching the gemspec
+  or release process stay at L0 regardless of track record.
 
-## Anti-goals
+### Anti-goals
 
 - Not a general prompt-engineering toolkit. One corpus in, one skill out.
 - Not a marketplace and not a publisher. Drop the output directory where
@@ -70,7 +85,34 @@ automates the distillation and nothing else.
 - No telemetry. lens sends the corpus to the configured model and nothing
   anywhere else.
 
-## How work gets proposed
+## ROADMAP (what next)
+
+The roadmap lives in GitHub, not here: one milestone per item, in order, at
+<https://github.com/Autogenetica/agent-lens/milestones>. Issues attach to the
+milestone they advance. This section keeps only the ordering and the reasons,
+because those change slower than the work.
+
+1. Multi-file corpora. Today the workaround is concatenating files by hand;
+   the pipeline should accept a directory.
+2. Quality eval and re-cast. A shaped skill needs a way to be scored against
+   its source and re-shaped when it falls short. This waits on the pilot
+   readout, because the eval has to measure something we have already seen
+   fail.
+3. Composition of several corpora into one lens. Last because it stacks on
+   both of the above: you cannot compose what you cannot evaluate.
+
+CI came first and is done: the suite runs on every push across the supported
+Rubies with no secrets in the environment.
+
+Off the list on purpose: PDF and EPUB extraction stay upstream in the agent
+training program's pre-processors, and auto-publishing to a marketplace stays
+off entirely.
+
+Standing, not sequenced: each module does one thing (Shape, Validator,
+SkillWriter). New capability arrives as a new module alongside them, not as a
+branch inside an existing one.
+
+## AGENTS (how agents work here)
 
 Improvements arrive as GitHub issues, labeled by origin and state:
 
@@ -81,20 +123,31 @@ Improvements arrive as GitHub issues, labeled by origin and state:
   its final comment and is permanent institutional memory. Proposals must check
   closed and deferred issues before re-raising an idea.
 
-## Review policy
+Each change class has an autonomy level per the constitution above, and the
+issue or PR that promoted a class is the record of its current level. The
+one-PR-a-week review budget applies on top of the ladder: an L1 class does not
+mean a PR a day.
 
-Changes are classed by risk (external visibility times reversibility), and each
-class has an autonomy level that can rise as the agent's track record earns it:
+## CHARTER (why this exists, what territory, what freedoms)
 
-- L0: propose in an issue only.
-- L1: open a PR; the maintainer merges.
-- L2: open a PR; it may merge after a 72-hour quiet period with green CI.
-- L3: merge on green CI, reported in a digest.
+**Why:** because most prompt engineering produces one-off context, useful for
+this session, hard to share, impossible to version. Agent Skills are versioned,
+portable context an agent loads on demand, and writing a good one from scratch
+is the part nobody wants to do twice.
 
-Every class starts at L0 or L1. Promotions happen only on the maintainer's
-explicit approval, backed by the acceptance record. Any revert demotes the
-class immediately. The extraction prompt, the default model, and anything
-touching the gemspec or release process stay at L0.
+**Territory:** <!-- VAL: edit. The old charter drew this border only by negation (the anti-goals); this states it positively. -->
+agent-lens owns the extraction framing, the shape-validate-write pipeline, the
+provenance record, and the CLI that drives them. It does not own corpus
+extraction from binary formats, skill hosting or distribution, provider
+plumbing, or the methodology behind the framing.
+
+**Freedoms:** the agent may open issues on anything in this territory, open
+PRs at the class's autonomy level, and propose amendments to this file.
+
+**Constraints:** the agent never merges amendments to this file, never cuts a
+release or bumps a version, never changes the extraction prompt or default
+model without a before/after, and never sends a corpus anywhere but the
+configured model.
 
 ## Amending this document
 
