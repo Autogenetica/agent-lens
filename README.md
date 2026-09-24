@@ -55,7 +55,7 @@ or publish it to a marketplace.
 | `--output` / `-o` | yes | Output directory (creates if missing) |
 | `--name` / `-n` | yes | Kebab-case skill name; matches the agentskills.io `name:` field |
 | `--framing` / `-f` | no | Operating-context phrase, e.g. *"a senior Ruby engineer reviewing code"*. This is the per-task-layer focus knob — distinct framings against the same corpus produce distinct skills. |
-| `--description` / `-d` | no | Override the auto-generated description (max 1024 chars per spec) |
+| `--description` / `-d` | no | Override the auto-generated description (max 1024 chars per spec). The default is derived from the checklist's own `if X, have you Y?` trigger clauses (`Use when the conversation involves X1; X2; ...`), so the skill fires on its domain, not on a generic sentence. |
 | `--license` | no | License string (default: *"Pending review"* — appropriate while content is pre-publication) |
 | `--model` | no | LLM model for extraction (default: `claude-sonnet-4-6`) |
 | `--env-file` | no | Path to a `.env` file to load (default: `./.env`) |
@@ -101,6 +101,7 @@ Lens::Shape          # single LLM call with RFC-2119 framing
     │
     ▼
 Lens::Validator      # agentskills.io constraints (name, description)
+Lens::Description    # default description derived from the body's trigger clauses
     │                # (Lens::Checklist scores the body's format off to the side; bin/eval uses it)
     │
     ▼

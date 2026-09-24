@@ -82,7 +82,8 @@ module Lens
       say_status :shaping, "single-call extraction with #{options[:model]} (this may take 30–90s)"
       body = shaper.cast
 
-      description = options[:description] || derive_description(options[:name], options[:framing])
+      description = options[:description] ||
+                    Description.derive(name: options[:name], body: body, framing: options[:framing])
       Validator.validate_description!(description)
 
       writer = SkillWriter.new(
@@ -114,19 +115,6 @@ module Lens
     def load_env(path)
       env_file = path || File.expand_path(".env", Dir.pwd)
       Dotenv.load(env_file) if File.exist?(env_file)
-    end
-
-    # Default description used when --description isn't provided. Kept short
-    # and safely under the 1024-char cap; user should override for production
-    # skills they intend to publish.
-    def derive_description(name, framing)
-      readable = name.split("-").map(&:capitalize).join(" ")
-      context = framing || "the relevant domain"
-      "#{readable} skill — a pre-response verification checklist applied when " \
-        "the user's conversation falls within the trigger conditions of any " \
-        "listed item. Use this skill whenever the agent is acting as #{context}, " \
-        "even when the user doesn't name the underlying patterns explicitly. " \
-        "(Auto-generated description; override with --description for publication.)"
     end
 
     def say_status(status, message)

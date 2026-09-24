@@ -6,6 +6,7 @@
 require_relative "lens/version"
 require_relative "lens/validator"
 require_relative "lens/checklist"
+require_relative "lens/description"
 require_relative "lens/shape"
 require_relative "lens/skill_writer"
 require_relative "lens/cli"

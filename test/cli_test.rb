@@ -152,7 +152,7 @@ class LensCLITest < Minitest::Test
     assert_match(/^  model: "some-other-model"$/, File.read(File.join(@output, "SKILL.md")))
   end
 
-  def test_shape_derives_description_from_name_and_framing
+  def test_shape_derives_description_from_body_triggers_and_framing
     with_fake_shaper { run_cli(*shape_args("--framing", "a test pilot")) }
 
     skill = File.read(File.join(@output, "SKILL.md"))
@@ -160,17 +160,19 @@ class LensCLITest < Minitest::Test
 
     refute_nil description
     assert_match(/\ACorpus Notes skill/, description)
+    assert_includes description, "Use when the conversation involves testing."
     assert_includes description, "acting as a test pilot"
-    assert_includes description, "Auto-generated description"
+    assert_includes description, "Auto-generated from the checklist's trigger clauses"
     assert_operator description.length, :<=, Lens::Validator::DESCRIPTION_MAX
   end
 
-  def test_shape_derived_description_falls_back_without_framing
+  def test_shape_derived_description_omits_framing_clause_without_framing
     with_fake_shaper { run_cli(*shape_args) }
 
     description = File.read(File.join(@output, "SKILL.md"))[/^description: "(.*)"$/, 1]
 
-    assert_includes description, "acting as the relevant domain"
+    assert_includes description, "Use when the conversation involves testing."
+    refute_includes description, "acting as"
   end
 
   def test_shape_uses_explicit_description_verbatim
