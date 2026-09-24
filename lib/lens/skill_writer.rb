@@ -17,7 +17,7 @@ module Lens
       on it (e.g., *"Per **<item name>**, I'd suggest..."*).
     HEADER
 
-    def initialize(output_dir:, name:, description:, body:, license: "Pending review", framing: nil, source_path: nil, source_sha256: nil, model: nil)
+    def initialize(output_dir:, name:, description:, body:, license: "Pending review", framing: nil, source_path: nil, source_sha256: nil, source_files: [], model: nil)
       @output_dir = output_dir
       @name = name
       @description = description
@@ -26,6 +26,7 @@ module Lens
       @framing = framing
       @source_path = source_path
       @source_sha256 = source_sha256
+      @source_files = source_files
       @model = model
     end
 
@@ -56,7 +57,7 @@ module Lens
         metadata:
           shaped-by: "agent-lens v#{Lens::VERSION}"
           shaped-at: "#{Time.now.utc.iso8601}"
-          source-corpus: #{yaml_escape(source_basename)}
+          source-corpus: #{yaml_escape(source_corpus_label)}
           model: #{yaml_escape(@model || "unknown")}
         ---
 
@@ -76,7 +77,7 @@ module Lens
 
         - **Shaped by:** [agent-lens](https://github.com/Autogenetica/agent-lens) v#{Lens::VERSION}
         - **Shaped at:** #{Time.now.utc.iso8601}
-        - **Source corpus:** #{render_source_corpus}
+        - **Source corpus:** #{render_source_corpus}#{render_source_files}
         - **Model:** `#{@model || "unknown"}`
         - **Framing:** #{@framing ? "`#{@framing}`" : "(default)"}
 
@@ -104,12 +105,37 @@ module Lens
       File.basename(@source_path.to_s)
     end
 
+    def multi_file?
+      @source_files.size > 1
+    end
+
+    # Frontmatter `source-corpus` stays a string per spec: the first file's
+    # basename, plus a "(+N files)" tail when the corpus spanned several (#17).
+    def source_corpus_label
+      return source_basename unless multi_file?
+
+      extra = @source_files.size - 1
+      "#{@source_files.first.basename} (+#{extra} #{extra == 1 ? 'file' : 'files'})"
+    end
+
+    # One line per file, in the order they were concatenated, each pinned by
+    # its own sha256 — the thing the `cat` workaround could never record.
+    def render_source_files
+      return "" unless multi_file?
+
+      lines = @source_files.each_with_index.map do |f, i|
+        "  #{i + 1}. `#{f.basename}` (sha256: `#{f.sha256}`, #{f.bytes} bytes)"
+      end
+      "\n#{lines.join("\n")}"
+    end
+
     # PROVENANCE.md identifies the corpus by basename + content hash, never by
     # the absolute path the author typed at cast time: the hash pins the exact
     # source regardless of where it lived, and the path would ship the
     # author's filesystem layout inside a published skill (#7).
     def render_source_corpus
       return "(unknown)" if @source_path.nil?
+      return "#{@source_files.size} files, concatenated in this order:" if multi_file?
 
       sha = source_sha256
       sha ? "`#{source_basename}` (sha256: `#{sha}`)" : "`#{source_basename}`"
