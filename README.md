@@ -65,7 +65,7 @@ or publish it to a marketplace.
 - Multi-file corpora (workaround: `cat files > combined.md` first)
 - PDF or EPUB extraction (use a pre-processor; the [agent training program](https://github.com/codenamev/agent-training-program) ships `epub_to_md.rb` and `ocw_to_md.rb` for those)
 - Auto-publishing to a marketplace
-- Quality eval / re-cast loop
+- Quality eval / re-cast loop (`bin/eval` measures the *format* half — item count, conformance, run-to-run stability — so a prompt change can say what moved; faithfulness to the source still needs a reader)
 - Composition of multiple corpora into a single lens
 
 ## Why this exists
@@ -101,6 +101,7 @@ Lens::Shape          # single LLM call with RFC-2119 framing
     │
     ▼
 Lens::Validator      # agentskills.io constraints (name, description)
+    │                # (Lens::Checklist scores the body's format off to the side; bin/eval uses it)
     │
     ▼
 Lens::SkillWriter    # writes SKILL.md + docs/PROVENANCE.md

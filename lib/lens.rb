@@ -5,6 +5,7 @@
 # so Shape must be loaded first.
 require_relative "lens/version"
 require_relative "lens/validator"
+require_relative "lens/checklist"
 require_relative "lens/shape"
 require_relative "lens/skill_writer"
 require_relative "lens/cli"
