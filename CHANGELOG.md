@@ -6,6 +6,19 @@ project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- `Lens::Checklist`: a deterministic structural scorer for a cast body
+  against the format `EXTRACTION_PROMPT` demands (10-15 numbered items, each
+  with a bold name, a `MUST verify:` marker, an `if X, have you Y?`
+  conditional, and no source citation). No I/O, no LLM; it does not change
+  what `lens shape` writes.
+- `bin/eval`: a manual before/after instrument. Captures N completions per
+  corpus into a gitignored `eval/<prompt-sha>/` and `--compare`s two capture
+  directories on item count, conformance, misses, and item-name overlap. The
+  first Direction bullet in WORLD.md ("the proposal says what moved") now has
+  a number to quote (#15).
+
 ### Changed
 
 - Ruby 4.0 is now the minimum supported version (`required_ruby_version`

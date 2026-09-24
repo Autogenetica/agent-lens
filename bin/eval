@@ -1,0 +1,102 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Manual before/after instrument for the extraction prompt (#15). Not a test:
+# it spends real LLM calls, so it never runs under `rake`.
+#
+#   bin/eval CORPUS [--framing F] [--runs N] [--out DIR] [--model M] [--env-file F]
+#       shapes CORPUS N times with the current prompt, writes each body to
+#       DIR/<prompt-sha>/<n>.md, prints Lens::Checklist metrics per run.
+#
+#   bin/eval --compare DIR_A DIR_B
+#       scores every *.md under each dir and prints the delta: item-count
+#       distribution, conformance rate, per-property misses, and item-name
+#       overlap (within a dir = run-to-run stability; across = drift).
+#
+# DIR defaults to ./eval, which is gitignored. <prompt-sha> is the SHA-256 of
+# EXTRACTION_PROMPT with the framing substituted, so two prompt versions land
+# in different directories without anyone naming them.
+
+require "optparse"
+require "digest"
+require "json"
+require "fileutils"
+require "dotenv"
+require_relative "../lib/lens"
+
+opts = { runs: 3, out: "eval", model: Lens::Shape::DEFAULT_MODEL, framing: nil, env_file: nil, compare: nil }
+OptionParser.new do |o|
+  o.banner = "usage: bin/eval CORPUS [options] | bin/eval --compare DIR_A DIR_B"
+  o.on("--framing F", String) { |v| opts[:framing] = v }
+  o.on("--runs N", Integer) { |v| opts[:runs] = v }
+  o.on("--out DIR", String) { |v| opts[:out] = v }
+  o.on("--model M", String) { |v| opts[:model] = v }
+  o.on("--env-file F", String) { |v| opts[:env_file] = v }
+  o.on("--compare", "Compare two capture directories") { opts[:compare] = true }
+end.parse!(ARGV)
+
+def score_dir(dir)
+  files = Dir[File.join(dir, "**", "*.md")].sort
+  abort "no *.md bodies under #{dir}" if files.empty?
+  files.map { |f| [f, Lens::Checklist.score(File.read(f))] }
+end
+
+def summarize(label, scored)
+  results = scored.map(&:last)
+  counts = results.map(&:count).sort
+  rates = results.map(&:conformance_rate)
+  names = results.map(&:names)
+  pairs = names.combination(2).to_a
+  stability = pairs.empty? ? nil : pairs.sum { |a, b| Lens::Checklist.name_overlap(a, b) } / pairs.size
+  misses = results.map(&:misses).each_with_object(Hash.new(0)) { |m, acc| m.each { |k, v| acc[k] += v } }
+  puts "#{label}: #{results.size} bodies"
+  puts "  items      min #{counts.first}  median #{counts[counts.size / 2]}  max #{counts.last}  " \
+       "(in 10-15: #{results.count(&:count_in_range?)}/#{results.size})"
+  puts format("  conformance mean %.3f  fully conformant %d/%d", rates.sum / rates.size,
+              results.count(&:conformant?), results.size)
+  puts "  misses     #{misses.map { |k, v| "#{k}=#{v}" }.join('  ')}"
+  puts format("  stability  mean pairwise name overlap %.3f", stability) if stability
+  names
+end
+
+if opts[:compare]
+  dir_a, dir_b = ARGV
+  abort "usage: bin/eval --compare DIR_A DIR_B" unless dir_a && dir_b
+  names_a = summarize("A #{dir_a}", score_dir(dir_a))
+  names_b = summarize("B #{dir_b}", score_dir(dir_b))
+  cross = names_a.product(names_b).map { |a, b| Lens::Checklist.name_overlap(a, b) }
+  puts format("A vs B     mean cross name overlap %.3f", cross.sum / cross.size)
+  exit
+end
+
+corpus_path = ARGV.first
+abort "usage: bin/eval CORPUS [options]" unless corpus_path
+abort "Corpus file not found: #{corpus_path}" unless File.exist?(corpus_path)
+
+env_file = opts[:env_file] || File.expand_path(".env", Dir.pwd)
+Dotenv.load(env_file) if File.exist?(env_file)
+abort "ANTHROPIC_API_KEY is not set" if ENV["ANTHROPIC_API_KEY"].to_s.empty?
+
+corpus = File.read(corpus_path)
+framing = opts[:framing] || Lens::Shape::DEFAULT_FRAMING
+prompt_sha = Digest::SHA256.hexdigest(Lens::Shape::EXTRACTION_PROMPT.sub("%FRAMING%", framing))[0, 12]
+dir = File.join(opts[:out], prompt_sha)
+FileUtils.mkdir_p(dir)
+existing = Dir[File.join(dir, "*.md")].size
+File.write(File.join(dir, "meta.json"), JSON.pretty_generate(
+  prompt_sha: prompt_sha, framing: framing, model: opts[:model],
+  corpus: File.basename(corpus_path), corpus_sha256: Digest::SHA256.hexdigest(corpus),
+  captured_at: Time.now.utc.iso8601
+))
+puts "capturing #{opts[:runs]} runs into #{dir} (#{existing} already there; new runs append)"
+
+opts[:runs].times do |i|
+  n = existing + i + 1
+  body = Lens::Shape.new(corpus: corpus, framing: framing, model: opts[:model]).cast
+  File.write(File.join(dir, format("%02d.md", n)), body)
+  r = Lens::Checklist.score(body)
+  puts format("run %02d: items=%d conformance=%.3f misses=%s", n, r.count, r.conformance_rate,
+              r.misses.reject { |_, v| v.zero? }.map { |k, v| "#{k}=#{v}" }.join(",").then { |s| s.empty? ? "none" : s })
+end
+
+summarize("all #{dir}", score_dir(dir))

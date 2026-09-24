@@ -8,3 +8,6 @@ tmp/
 # lemans bench run output -- lemans writes to ./runs relative to CWD,
 # not bench/runs, when invoked as `lemans run --bench=bench ...`
 runs/
+
+# bin/eval captures (real completions; compare locally, never commit)
+eval/
