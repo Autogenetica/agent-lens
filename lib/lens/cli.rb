@@ -25,7 +25,7 @@ module Lens
       puts "agent-lens #{Lens::VERSION}"
     end
 
-    desc "shape CORPUS_PATH",
+    desc "shape CORPUS_PATH [CORPUS_PATH...]",
          "Shape an Agent Skill from a corpus of opinionated content"
     long_desc <<~LONGDESC
       Shape an agentskills.io-compliant Agent Skill from a corpus.
@@ -60,18 +60,25 @@ module Lens
                    desc: "LLM model to use for extraction"
     option :env_file, type: :string,
                       desc: "Path to a .env file to load (defaults to ./.env)"
-    def shape(corpus_path)
+    def shape(*corpus_paths)
       load_env(options[:env_file])
 
-      unless File.exist?(corpus_path)
-        say_error "Corpus file not found: #{corpus_path}"
+      if corpus_paths.empty?
+        say_error "Usage: lens shape CORPUS_PATH [CORPUS_PATH...] --output DIR --name NAME"
         exit 1
       end
 
       Validator.validate_name!(options[:name])
 
-      corpus = File.read(corpus_path)
-      say_status :reading, "#{corpus_path} (#{corpus.length} chars)"
+      gathered = Corpus.gather(corpus_paths)
+      corpus = gathered[:text]
+      files = gathered[:files]
+      if files.size == 1
+        say_status :reading, "#{files.first.path} (#{corpus.length} chars)"
+      else
+        say_status :reading, "#{files.size} files (#{corpus.length} chars)"
+        files.each { |f| say_status :file, "#{f.path} (#{f.bytes} bytes)" }
+      end
 
       shaper = Shape.new(
         corpus: corpus,
@@ -92,8 +99,9 @@ module Lens
         body: body,
         license: options[:license],
         framing: options[:framing],
-        source_path: corpus_path,
-        source_sha256: Digest::SHA256.hexdigest(corpus),
+        source_path: files.first.path,
+        source_sha256: files.first.sha256,
+        source_files: files,
         model: options[:model]
       )
 
@@ -101,11 +109,14 @@ module Lens
       say_status :wrote, paths[:skill_path]
       say_status :wrote, paths[:provenance_path]
       say ""
-      say "Shaped #{options[:name]} from #{File.basename(corpus_path)}."
+      say "Shaped #{options[:name]} from #{files.size == 1 ? files.first.basename : "#{files.size} files"}."
       say "Next: review the SKILL.md body for faithfulness, then publish to a"
       say "marketplace or drop into ~/.claude/skills/#{options[:name]}/ to load locally."
     rescue Validator::InvalidName, Validator::InvalidDescription => e
       say_error "Invalid skill metadata: #{e.message}"
+      exit 1
+    rescue Corpus::Missing, Corpus::Empty => e
+      say_error e.message
       exit 1
     end
 
