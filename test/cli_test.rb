@@ -24,7 +24,8 @@ class LensCLITest < Minitest::Test
     @tmp = Dir.mktmpdir("lens-cli-test-")
     @corpus = File.join(@tmp, "corpus-notes.md")
     File.write(@corpus, "# Notes\n\nPrefer small objects over clever ones.\n")
-    @output = File.join(@tmp, "shaped-skill")
+    # Basename must equal --name: the spec requires SKILL.md name == parent dir.
+    @output = File.join(@tmp, "corpus-notes")
     # Every shape invocation points --env-file at a private file so the test
     # never loads a developer's real ./.env into the process.
     @env_file = File.join(@tmp, "test.env")
@@ -103,6 +104,27 @@ class LensCLITest < Minitest::Test
 
     assert_equal 0, calls, "Shape.new must not run for an invalid name"
     refute File.exist?(@output)
+  end
+
+  def test_shape_rejects_output_basename_that_differs_from_name_before_shaping
+    Lens::Shape.stub(:new, ->(**) { flunk "Shape.new should not be called" }) do
+      status, out, = run_cli("shape", @corpus, "--output", File.join(@tmp, "shaped-skill"),
+                             "--name", "corpus-notes", "--env-file", @env_file)
+
+      assert_equal 1, status
+      assert_match(/"shaped-skill"/, out)
+      assert_match(/must match --name \("corpus-notes"\)/, out)
+    end
+    refute File.exist?(File.join(@tmp, "shaped-skill"))
+  end
+
+  def test_shape_accepts_output_with_trailing_slash_matching_name
+    with_fake_shaper do
+      status, = run_cli(*shape_args.tap { |a| a[a.index("--output") + 1] = "#{@output}/" })
+
+      assert_equal 0, status
+    end
+    assert_match(/^name: corpus-notes$/, File.read(File.join(@output, "SKILL.md")))
   end
 
   def test_shape_rejects_over_long_description_after_shaping

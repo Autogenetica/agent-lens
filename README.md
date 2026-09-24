@@ -53,7 +53,7 @@ or publish it to a marketplace.
 | Flag | Required | Notes |
 |---|---|---|
 | `--output` / `-o` | yes | Output directory (creates if missing) |
-| `--name` / `-n` | yes | Kebab-case skill name; matches the agentskills.io `name:` field |
+| `--name` / `-n` | yes | Kebab-case skill name; matches the agentskills.io `name:` field. Must equal the basename of `--output` (the spec requires SKILL.md name == parent directory); `lens shape` refuses otherwise, before calling the LLM |
 | `--framing` / `-f` | no | Operating-context phrase, e.g. *"a senior Ruby engineer reviewing code"*. This is the per-task-layer focus knob — distinct framings against the same corpus produce distinct skills. |
 | `--description` / `-d` | no | Override the auto-generated description (max 1024 chars per spec) |
 | `--license` | no | License string (default: *"Pending review"* — appropriate while content is pre-publication) |
