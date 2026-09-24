@@ -1,0 +1,30 @@
+# Dependabot policy for agent-lens.
+#
+# Version updates stay off (open-pull-requests-limit: 0); GitHub's grouped
+# security updates keep running. The ignore rules below apply to both, so a
+# security PR never tries to drag in either major before we're ready for it.
+#
+# Two majors are deliberately held (see issue #14):
+#
+#   json >= 3   — ruby_llm pinned `json < 3` on main (crmne/ruby_llm@e7a1542).
+#                 Unblock: a ruby_llm release that lifts the pin. Then delete
+#                 the rule and let Dependabot's PR through.
+#
+#   minitest >= 6 — 6.0 splits minitest/mock into its own gem and drops
+#                 assert_equal(nil, ...). It's a gemspec-line change plus an
+#                 assertion audit, but only worth doing once CI runs the test
+#                 suite across the supported Rubies.
+#                 Unblock: a Ruby-matrix CI run + a maintainer gemspec bump
+#                 to `~> 6.0` with `minitest-mock` as a dev dependency.
+version: 2
+updates:
+  - package-ecosystem: "bundler"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 0
+    ignore:
+      - dependency-name: "json"
+        versions: [">= 3"]
+      - dependency-name: "minitest"
+        versions: [">= 6"]
