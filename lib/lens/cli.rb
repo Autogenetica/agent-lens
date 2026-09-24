@@ -70,6 +70,17 @@ module Lens
 
       Validator.validate_name!(options[:name])
 
+      # agentskills.io: name MUST match the parent directory name. The
+      # validator leaves this to the caller, so check it here, before the
+      # LLM call, so a typo does not cost a 30-90s completion.
+      output_basename = File.basename(File.expand_path(options[:output]))
+      if output_basename != options[:name]
+        say_error "Invalid skill metadata: --output directory name (#{output_basename.inspect}) " \
+                  "must match --name (#{options[:name].inspect}); the spec requires SKILL.md " \
+                  "name to equal its parent directory"
+        exit 1
+      end
+
       corpus = File.read(corpus_path)
       say_status :reading, "#{corpus_path} (#{corpus.length} chars)"
 
