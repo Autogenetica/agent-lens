@@ -1,4 +1,4 @@
-# Pilot bench: BASELINE arm. Same profile as the Rails Foundation's
+# Pilot bench: LENSED arm. Same profile as the Rails Foundation's
 # ai-evals/bench.yml (Writebook image, miniswen-installed, 90m/400 steps)
 # with three deliberate changes, all mirrored in ../lensed/bench.yml:
 #
@@ -7,10 +7,11 @@
 #   2. hosts  -> api.anthropic.com only.
 #   3. cost   -> $0.60 per trial, from the Fable run's ~$0.55/call shape.
 #                126 trials (42 tasks x 3 attempts) caps at ~$75 by config;
-#                the pilot ceiling Minerva estimated is $65, so stop at -k 3 and watch
+#                the pilot ceiling Val set is $65, so stop at -k 3 and watch
 #                `lemans report` cost after the first task sweep.
 #
-# tasks/ and docker/ are NOT committed: bench/lemans/pilot/prepare.sh copies
+# tasks/ here are the lensify.rb output (instruction.md carries the Rails-idiom
+# lens ahead of the original task). tasks/ and docker/ are NOT committed:
 # them from a local ai-evals checkout. The ai-evals repo asks that its task
 # data never land in a training corpus, and a second public copy is the
 # opposite of that.

@@ -20,6 +20,9 @@ version: 1
 
 environment:
   dockerfile: docker/writebook/Dockerfile
+  profiles:
+    fizzy:
+      dockerfile: docker/fizzy/Dockerfile
   resources:
     cpus: 2
     memory: 2GB
@@ -29,16 +32,15 @@ environment:
     mode: public # open during setup only, to install miniswen (as upstream)
 
 agent:
-  name: miniswen-installed
-  model: anthropic/claude-haiku-4-5-20251001
+  name: miniswen
+  model: openrouter/openai/gpt-5.6-luna
   timeout: 90m
   step_limit: 400
-  cost_limit: 0.60
+  cost_limit: 60.0
   exec_timeout: 300
   environment:
     network:
-      mode: allowlist
-      hosts: [api.anthropic.com]
+      mode: none
 
 verifier:
   timeout: 10m
