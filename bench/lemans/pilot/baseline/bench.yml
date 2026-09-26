@@ -2,9 +2,9 @@
 # ai-evals/bench.yml (Writebook image, miniswen-installed, 90m/400 steps)
 # with three deliberate changes, all mirrored in ../lensed/bench.yml:
 #
-#   1. model  -> Haiku 4.5 over the Anthropic API directly (ANTHROPIC_API_KEY),
-#                not OpenRouter. Cheapest model that still exercises the lens.
-#   2. hosts  -> api.anthropic.com only.
+#   1. model  -> Haiku 4.5 through OpenRouter (OPENROUTER_API_KEY), so miniswen
+#                sets cache breakpoints (run 3; runs 1-2 used direct Anthropic / luna).
+#   2. hosts  -> openrouter.ai only.
 #   3. cost   -> $0.60 per trial, from the Fable run's ~$0.55/call shape.
 #                126 trials (42 tasks x 3 attempts) caps at ~$75 by config;
 #                the pilot ceiling Minerva estimated is $65, so stop at -k 3 and watch
