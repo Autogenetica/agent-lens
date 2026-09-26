@@ -8,8 +8,9 @@
 # an agent-lens skill is to write a copy of each task where instruction.md is
 #
 #     <original YAML frontmatter, untouched>
+#     <preamble: "the following Agent Skill is loaded...">
 #     <lens SKILL.md body>
-#     <separator>
+#     <separator: "end of loaded skill, the request follows">
 #     <original instruction body>
 #
 # Everything else in the task dir (environment.patch, solution.patch,
@@ -32,7 +33,12 @@ require "optparse"
 
 module Lensify
   FRONTMATTER = /\A---\s*\n.*?\n---\s*\n/m
-  SEPARATOR = "\n\n---\n\n<!-- lens: end of pre-response checklist; task follows -->\n\n"
+  # The lens is framed the way a harness presents a loaded Agent Skill: it is
+  # announced as loaded standing guidance, then the request follows. Nothing
+  # here is specific to the benchmark; a skill loaded in a real session reads
+  # the same way to the agent.
+  PREAMBLE = "The following Agent Skill is loaded for this session. It is standing guidance for how the agent works; it is not part of the request.\n\n"
+  SEPARATOR = "\n\n---\n\nEnd of loaded skill. The request follows.\n\n"
 
   Options = Struct.new(:lens, :tasks, :out, :names, :force, keyword_init: true)
 
@@ -51,7 +57,7 @@ module Lensify
   # Compose the lensed instruction: task frontmatter first, then lens, then task.
   def self.compose(instruction_text, lens_text)
     fm, body = split_frontmatter(instruction_text)
-    "#{fm}#{lens_body(lens_text)}#{SEPARATOR}#{body.lstrip}"
+    "#{fm}#{PREAMBLE}#{lens_body(lens_text)}#{SEPARATOR}#{body.lstrip}"
   end
 
   # Write the lensed copy of one task dir. Returns the destination path.
