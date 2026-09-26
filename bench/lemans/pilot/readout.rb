@@ -17,12 +17,14 @@ HERE = Pathname(ENV["PILOT_DIR"] || __dir__)
 DATE = ARGV[0] || Time.now.strftime("%Y-%m-%d")
 ARMS = %w[baseline lensed vocab].freeze
 K = (ENV["K"] || 3).to_i
+RUNS = ENV["RUNS"] || "run3"          # glob, e.g. "{run3,run3b}" for the run-3b combined readout
+DROP_DEAD = ENV["DROP_DEAD"] == "1"     # drop trials that never reached a model call (no patch, zero steps)
 CEILING = 65.0
 
 Trial = Struct.new(:task, :anchor, :scored, :passed, :reached, :input, :cached, :output, :steps, :cost, :started, :finished)
 
 def load_arm(arm)
-  Dir[HERE.join(arm, "runs/run3/*/*/result.json").to_s].sort.map do |f|
+  Dir[HERE.join(arm, "runs/#{RUNS}/*/*/result.json").to_s].sort.filter_map do |f|
     r = JSON.parse(File.read(f))
     patch = Pathname(f).dirname.join("agent.patch")
     anchor = r.dig("metadata", "rails_anchor")
@@ -32,6 +34,7 @@ def load_arm(arm)
                 patch.read.each_line.any? { |l| l.start_with?("+") && !l.start_with?("+++") && l.match?(pat) }
               end
     u = r["usage"] || {}
+    next if DROP_DEAD && !patch.file? && u["steps"].to_i.zero?
     Trial.new(r["task"], anchor, r.dig("outcome", "scored") == true, r["reward"].to_f >= 1.0, reached,
               u["input_tokens"].to_i, u["cached_tokens"].to_i, u["output_tokens"].to_i, u["steps"].to_i,
               u["cost_usd"].to_f, r["started_at"], r["finished_at"])
