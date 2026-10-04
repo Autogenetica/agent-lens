@@ -11,7 +11,7 @@
 require "csv"
 
 rows = CSV.read(ARGV.fetch(0), headers: true)
-meta = %w[arm task trial reward steps cost state_chars]
+meta = %w[arm task trial reward steps cost state_chars judge_model judge_cost_usd prompt_tokens]
 questions = rows.headers - meta
 
 def auc(pairs) # [[score, label(1/0)], ...]
