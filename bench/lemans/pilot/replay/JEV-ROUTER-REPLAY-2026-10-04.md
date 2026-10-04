@@ -112,3 +112,43 @@ the lens items carry signal. They do not.
 readers see the same trials, writes `jev-router-replay-2026-10-04.csv`
 (committed); `laya-analyze.rb` prints the AUC tables for either CSV.
 Needs `OPENROUTER_API_KEY` in the environment.
+
+## Addendum, same day: Jev's systemone API, run
+
+Val supplied a `TYPESAFE_API_KEY` after the above was written, so the
+section titled "Not run" is now run. `jev-systemone-replay.rb`: the real
+typed-decision endpoint, `jev-1.13.0`, same 16 noul questions, same 330
+trials, same state construction (request + diff as two named fields,
+24,000-char diff cap). 330 of 330 answered, 549,818 input tokens,
+2.3 cents, under a minute.
+
+| | all | baseline | lensed | vocab |
+|---|---|---|---|---|
+| comparator | 0.519 | 0.526 | 0.572 | 0.454 |
+| mean of 15 items | 0.382 | 0.451 | 0.356 | 0.337 |
+| min of 15 items | 0.356 | 0.339 | 0.391 | 0.342 |
+| best item (sensitive_data) | 0.582 | | | |
+| worst item (csrf) | 0.312 | | | |
+
+Jev's probabilities are well spread (quartiles 0.45 / 0.58 / 0.68, no
+saturation), which is a nicer instrument than the router's 0.95 pile-up,
+and it still cannot separate pass from fail: 0.519 on the comparator is
+laya's 0.518 again. The three tasks luna never solves score 0.39, 0.63 and
+0.70; the task it always solves fastest (ac-throttle-search) scores 0.47.
+
+So the four-reader table is:
+
+| reader | kind | state | comparator AUC | lens items |
+|---|---|---|---|---|
+| laya typed-decisions | decision model, local | 1,500 chars | 0.518 | 0.38 to 0.58 |
+| jev-1.13.0 systemone | decision model, hosted | full diff | 0.519 | 0.31 to 0.58 |
+| jev-router, any routed LLM | generative | full diff | 0.629 | 0.42 to 0.47 |
+| jev-router, gpt-6.1-sol only | generative | full diff | 0.745 | n/a |
+
+Two decision models, one small and local, one large and hosted, with
+context from 1,500 characters to the whole diff, land on the same coin
+flip. The only reader with signal is a generative model that can trace
+what the code does, and even it carries nothing from the lens items. The
+decision-model framing (typed questions over a state) is right for states
+that are text about a situation. A diff is not that; whether it works is
+not a property visible on its surface.
