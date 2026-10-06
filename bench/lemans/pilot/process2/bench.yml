@@ -1,4 +1,4 @@
-# Pilot bench: BASELINE arm. Same profile as the Rails Foundation's
+# Pilot bench: LENSED arm. Same profile as the Rails Foundation's
 # ai-evals/bench.yml (Writebook image, miniswen-installed, 90m/400 steps)
 # with three deliberate changes, all mirrored in ../lensed/bench.yml:
 #
@@ -10,7 +10,8 @@
 #                the pilot ceiling Minerva estimated is $65, so stop at -k 3 and watch
 #                `lemans report` cost after the first task sweep.
 #
-# tasks/ and docker/ are NOT committed: bench/lemans/pilot/prepare.sh copies
+# tasks/ here are the lensify.rb output (instruction.md carries the Rails-idiom
+# lens ahead of the original task). tasks/ and docker/ are NOT committed:
 # them from a local ai-evals checkout. The ai-evals repo asks that its task
 # data never land in a training corpus, and a second public copy is the
 # opposite of that.
@@ -32,7 +33,7 @@ environment:
 
 agent:
   name: miniswen
-  model: openrouter/anthropic/claude-haiku-4.5
+  model: openrouter/openai/gpt-5.6-luna
   timeout: 90m
   step_limit: 400
   cost_limit: 60.0
