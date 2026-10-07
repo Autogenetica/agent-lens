@@ -14,3 +14,5 @@ process2/tasks/
 process2/docker/
 noheader/tasks/
 noheader/docker/
+# per-check hidden test names are ai-evals task data: keep the local copy, never commit it
+split/stage1-checks.txt
