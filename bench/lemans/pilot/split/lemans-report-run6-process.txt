@@ -1,0 +1,24 @@
+task                       score  time    cost     steps  tokens
+ac-deep-link-return        10/10  1m 54s  $0.0118  15.5   163855
+ac-throttle-search         8/10   2m 0s   $0.0149  12.4   193749
+aj-enqueue-after-commit    7/10   1m 50s  $0.014   14.7   207014
+aj-resumable-cleanup       10/10  2m 3s   $0.0144  12.9   178457
+ar-announce-once           8/10   1m 57s  $0.0159  14.9   235625
+ar-archive-book-access     10/10  2m 1s   $0.0156  15.8   237002
+ar-atomic-import           10/10  1m 42s  $0.0111  12.1   136889
+ar-bulk-access-grants      5/10   2m 3s   $0.0138  14     174335
+ar-compact-positions       10/10  1m 22s  $0.0099  10     126233
+ar-erase-account           0/10   2m 10s  $0.0199  16.5   343472
+ar-release-recap           10/10  1m 52s  $0.0134  13.2   193304
+ar-tenant-isolation        10/10  2m 47s  $0.0242  16     384529
+as-purge-embedded-images   0/10   1m 46s  $0.0168  16.6   305606
+as-variant-processed-once  0/10   2m 11s  $0.0233  20.1   455669
+av-toc-cache-per-role      3/10   2m 7s   $0.0192  16.6   334101
+hello-world                10/10  47s     $0.0021  4.9    16347
+hw-scoped-broadcast        4/10   2m 56s  $0.0245  22.4   473850
+sec-audit-sweep            9/10   2m 57s  $0.0253  20.9   503313
+sup-cache-library-digest   10/10  1m 37s  $0.0129  14.1   180218
+sup-legacy-conversions     7/10   1m 52s  $0.0138  14.3   197264
+sup-log-to-terminal        9/10   1m 38s  $0.0125  14.6   180059
+tst-error-page-flake       9/10   2m 47s  $0.0144  18.2   233910
+220 trials: 220 scored, 0 invalid, 159 solved (72%) · $3.4371 · pass@10 19/22 tasks (86%)
