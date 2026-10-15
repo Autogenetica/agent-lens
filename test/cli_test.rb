@@ -4,6 +4,7 @@ require_relative "test_helper"
 require "minitest/mock"
 require "tmpdir"
 require "fileutils"
+require "digest"
 
 # Exercises Lens::CLI without a network call. Everything up to Shape#cast is
 # pure argument handling and short-circuits; the success path stubs
@@ -141,6 +142,41 @@ class LensCLITest < Minitest::Test
     provenance = File.read(File.join(@output, "docs", "PROVENANCE.md"))
     assert_match(/Provenance — corpus-notes/, provenance)
     assert_match(/\*\*Framing:\*\* `a test pilot`/, provenance)
+  end
+
+  def test_shape_gathers_multiple_files_with_markers_and_per_file_provenance
+    second = File.join(@tmp, "more-notes.md")
+    File.write(second, "# More\n\nName the trade-off.\n")
+
+    received = with_fake_shaper do
+      status, out, = run_cli("shape", @corpus, second, "--output", @output,
+                             "--name", "corpus-notes", "--env-file", @env_file)
+
+      assert_equal 0, status
+      assert_match(/reading\s+2 files \(\d+ chars\)/, out)
+      assert_match(/Shaped corpus-notes from 2 files\./, out)
+    end
+
+    assert_includes received[:corpus], "<!-- source file 1 of 2: corpus-notes.md -->"
+    assert_includes received[:corpus], "<!-- source file 2 of 2: more-notes.md -->"
+    assert_includes received[:corpus], "Name the trade-off."
+
+    skill = File.read(File.join(@output, "SKILL.md"))
+    assert_match(/^  source-corpus: "corpus-notes\.md \(\+1 file\)"$/, skill)
+
+    provenance = File.read(File.join(@output, "docs", "PROVENANCE.md"))
+    assert_match(/\*\*Source corpus:\*\* 2 files, concatenated in this order:/, provenance)
+    assert_match(/1\. `corpus-notes\.md` \(sha256: `#{Digest::SHA256.file(@corpus).hexdigest}`, \d+ bytes\)/, provenance)
+    assert_match(/2\. `more-notes\.md` \(sha256: `#{Digest::SHA256.file(second).hexdigest}`, \d+ bytes\)/, provenance)
+    refute_includes provenance, @tmp, "provenance must not leak the source directory"
+  end
+
+  def test_shape_with_no_corpus_path_exits_1
+    status, out, = run_cli("shape", "--output", @output, "--name", "corpus-notes",
+                                "--env-file", @env_file)
+
+    assert_equal 1, status
+    assert_match(/Usage: lens shape CORPUS_PATH/, out)
   end
 
   def test_shape_passes_model_option_through
