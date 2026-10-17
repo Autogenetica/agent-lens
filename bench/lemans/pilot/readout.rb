@@ -9,6 +9,7 @@
 #
 #   ruby bench/lemans/pilot/readout.rb 2026-09-26 > bench/lemans/pilot/RESULTS-2026-09-26.md
 
+require "csv"
 require "json"
 require "pathname"
 require "time"
@@ -19,9 +20,11 @@ ARMS = %w[baseline lensed vocab].freeze
 K = (ENV["K"] || 3).to_i
 RUNS = ENV["RUNS"] || "run3"          # glob, e.g. "{run3,run3b}" for the run-3b combined readout
 DROP_DEAD = ENV["DROP_DEAD"] == "1"     # drop trials that never reached a model call (no patch, zero steps)
+JUDGE_CSV = ENV["JUDGE_CSV"]            # advisory: output of replay/correctness-judge.rb; adds a judge column, never touches pass/reach
+JUDGE = JUDGE_CSV ? CSV.read(JUDGE_CSV, headers: true).to_h { |r| [r["trial"], r["correct"].to_f] } : {}
 CEILING = 65.0
 
-Trial = Struct.new(:task, :anchor, :scored, :passed, :reached, :input, :cached, :output, :steps, :cost, :started, :finished)
+Trial = Struct.new(:id, :task, :anchor, :scored, :passed, :reached, :input, :cached, :output, :steps, :cost, :started, :finished)
 
 def load_arm(arm)
   Dir[HERE.join(arm, "runs/#{RUNS}/*/*/result.json").to_s].sort.filter_map do |f|
@@ -35,7 +38,7 @@ def load_arm(arm)
               end
     u = r["usage"] || {}
     next if DROP_DEAD && !patch.file? && u["steps"].to_i.zero?
-    Trial.new(r["task"], anchor, r.dig("outcome", "scored") == true, r["reward"].to_f >= 1.0, reached,
+    Trial.new(Pathname(f).dirname.basename.to_s, r["task"], anchor, r.dig("outcome", "scored") == true, r["reward"].to_f >= 1.0, reached,
               u["input_tokens"].to_i, u["cached_tokens"].to_i, u["output_tokens"].to_i, u["steps"].to_i,
               u["cost_usd"].to_f, r["started_at"], r["finished_at"])
   end
@@ -43,6 +46,11 @@ end
 
 def pct(a, b) = b.zero? ? "n/a" : "#{(100.0 * a / b).round}%"
 def frac(a, b) = "#{a}/#{b} (#{pct(a, b)})"
+# mean judge probability over the trials that have one; advisory only (decisions 2026-10-04 option 2)
+def judge_mean(ts)
+  js = ts.filter_map { |t| JUDGE[t.id] }
+  js.empty? ? "n/a" : "#{(js.sum / js.size).round(2)} (n=#{js.size})"
+end
 
 arms = ARMS.to_h { |a| [a, load_arm(a)] }
 tasks = arms.values.flatten.map(&:task).uniq.sort
@@ -103,6 +111,7 @@ puts "| cost | #{ARMS.map { |a| "$#{'%.2f' % stats[a][:cost]}" }.join(' | ')} |"
 puts "| cost per trial | #{ARMS.map { |a| "$#{'%.3f' % stats[a][:per_trial]}" }.join(' | ')} |"
 inv = ARMS.map { |a| stats[a][:invalid] }.sum
 puts "| invalid trials | #{ARMS.map { |a| stats[a][:invalid] }.join(' | ')} |" if inv.positive?
+puts "| judge p(correct), advisory | #{ARMS.map { |a| judge_mean(arms[a]) }.join(' | ')} |" if JUDGE.any?
 puts
 puts "pass@#{K} here is not directly comparable to run 2's pass@5: three attempts"
 puts "give a task fewer chances to land one, so a task solved once in five may"
@@ -125,7 +134,8 @@ tasks.each do |t|
   cells = ARMS.map do |a|
     ts = arms[a].select { |x| x.task == t }
     p = "#{ts.count(&:passed)}/#{ts.size}"
-    anchor ? "#{p} · #{ts.count(&:reached)}/#{ts.size}" : p
+    cell = anchor ? "#{p} · #{ts.count(&:reached)}/#{ts.size}" : p
+    JUDGE.any? ? "#{cell} · j #{judge_mean(ts)}" : cell
   end
   puts "| #{t} | #{anchor || '(none)'} | #{cells.join(' | ')} |"
 end
