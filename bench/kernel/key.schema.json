@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Sealed arm key for a blind-rating A/B run",
+  "description": "Written before any run starts and not read back until every slot is rated. Labels (A, B, ...) map to a commit plus a name; the prediction is sealed with the arms.",
+  "type": "object",
+  "required": ["A", "B", "coin", "prediction"],
+  "properties": {
+    "A": { "type": "string", "description": "sha + arm name, e.g. '3350755 baseline'" },
+    "B": { "type": "string", "description": "sha + arm name, e.g. '41a5332 treatment'" },
+    "coin": { "type": "string", "description": "how the label assignment was decided, with the rule fixed before the flip" },
+    "baseline_parent": { "type": "string", "description": "the treatment arm's parent commit, when the arms are a commit and its parent" },
+    "prediction": {
+      "type": "string",
+      "description": "which arm should win on which metric, and by what mechanism, written in a sentence before the first run. A run with no sealed prediction is a measurement, not a test."
+    },
+    "redactions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "vocabulary the treatment introduces, redacted inline as [redacted] by extract-rated.py; written at sealing time, not after"
+    },
+    "rubric": {
+      "type": "object",
+      "description": "anchors for the 1-5 actionability rating, at least for 2 and 3, written before rating",
+      "additionalProperties": { "type": "string" }
+    }
+  },
+  "additionalProperties": true
+}
