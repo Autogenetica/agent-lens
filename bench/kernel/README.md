@@ -1,6 +1,6 @@
 # bench/kernel
 
-The blind-rating A/B kernel: the part of an evaluation that stays fixed while the thing under test changes. Extracted from the ai-software-architect #35 run and adopted as the shared scorer for agent-lens milestone 2 and ruby-skills roadmap item 2. The design note, with the slot table per target, lives in the Minerva workspace: `research/eval-kernel-design.md` (private repo; ask Val for a copy).
+The blind-rating A/B kernel: the part of an evaluation that stays fixed while the thing under test changes. Extracted from the ai-software-architect #35 run and adopted as the shared scorer for agent-lens milestone 2 and ruby-skills roadmap item 2. The design note, with the slot table per target, is kept privately; ask the maintainer for a copy.
 
 ## Six fixed parts
 
