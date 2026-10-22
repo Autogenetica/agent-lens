@@ -15,10 +15,12 @@ The blind-rating A/B kernel: the part of an evaluation that stays fixed while th
 
 ```
 python3 -I overlap.py <arm_dir> [<arm_dir> ...]
-python3 -I extract-rated.py <review.md> <outdir> [--seed N]
+ruby extract_rated.rb <review.md> <outdir> [--seed N]
 ```
 
-`overlap.py` expects `members/<member>.md` under each arm directory and prints a per-arm table plus the per-pair matrix. `extract-rated.py` writes `slot-NN.md` files and a `KEY-sealed.json` the rater does not open. Both are stdlib only.
+`overlap.py` expects `members/<member>.md` under each arm directory and prints a per-arm table plus the per-pair matrix. `extract_rated.rb` writes `slot-NN.md` files and a `KEY-sealed.json` the rater does not open. Both are stdlib only.
+
+`extract_rated.rb` replaces `extract-rated.py` with identical per-slot output; the seeded shuffle uses Ruby's `Random`, so a seed maps to a different slot order than the Python script gave. `overlap.py` is next.
 
 The heading and vocabulary filters inside `extract-rated.py` are the asa #35 treatment's. They are the first thing to parameterise when a second target runs; the `redactions` field in the key is the intended source.
 
