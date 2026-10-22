@@ -4,5 +4,7 @@ baseline/docker/
 lensed/tasks/
 lensed/docker/
 */runs/
+vocab/tasks/
+vocab/docker/
 control/tasks/
 control/docker/
