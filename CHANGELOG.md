@@ -8,6 +8,12 @@ project uses [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `Lens::Description`: the default `SKILL.md` description is now derived
+  from the cast body's own `if X, have you Y?` trigger clauses ("Use when
+  the conversation involves X1; X2; ..."), capped under the 1024-char spec
+  limit, with the framing appended. Deterministic, no second LLM call, no
+  prompt change; `--description` still overrides and bodies with no
+  parseable clause fall back to the previous name-and-framing text (#19).
 - `Lens::Checklist`: a deterministic structural scorer for a cast body
   against the format `EXTRACTION_PROMPT` demands (10-15 numbered items, each
   with a bold name, a `MUST verify:` marker, an `if X, have you Y?`
