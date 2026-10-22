@@ -59,6 +59,12 @@ where their judge-scored readout said 41%. The gap is the concept anchors
 above. Treat reach here as a within-pilot comparison, not a leaderboard
 number.
 
+## Index
+
+Start at [PILOT-SUMMARY.md](PILOT-SUMMARY.md): the verdict, the run
+table, the harness lessons, and what survives. Per-run notes are
+`RESULTS-<date>.md`; the gate replays are under `replay/`.
+
 ## Control arm (run 2)
 
 `control/LENS.md` is the vocabulary control: the same fifteen checks, rewritten
