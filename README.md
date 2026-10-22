@@ -53,19 +53,32 @@ or publish it to a marketplace.
 | Flag | Required | Notes |
 |---|---|---|
 | `--output` / `-o` | yes | Output directory (creates if missing) |
-| `--name` / `-n` | yes | Kebab-case skill name; matches the agentskills.io `name:` field |
+| `--name` / `-n` | yes | Kebab-case skill name; matches the agentskills.io `name:` field. Must equal the basename of `--output` (the spec requires SKILL.md name == parent directory); `lens shape` refuses otherwise, before calling the LLM |
 | `--framing` / `-f` | no | Operating-context phrase, e.g. *"a senior Ruby engineer reviewing code"*. This is the per-task-layer focus knob — distinct framings against the same corpus produce distinct skills. |
-| `--description` / `-d` | no | Override the auto-generated description (max 1024 chars per spec) |
+| `--description` / `-d` | no | Override the auto-generated description (max 1024 chars per spec). The default is derived from the checklist's own `if X, have you Y?` trigger clauses (`Use when the conversation involves X1; X2; ...`), so the skill fires on its domain, not on a generic sentence. |
 | `--license` | no | License string (default: *"Pending review"* — appropriate while content is pre-publication) |
 | `--model` | no | LLM model for extraction (default: `claude-sonnet-4-6`) |
 | `--env-file` | no | Path to a `.env` file to load (default: `./.env`) |
 
+### Multi-file corpora
+
+`lens shape` takes any number of files and directories. Directories expand
+to their `*.md` / `*.markdown` / `*.txt` files, sorted by path. With more
+than one file, each file is preceded by a visible boundary marker
+(`<!-- source file 2 of 5: models.md -->`) and `docs/PROVENANCE.md` lists
+every file with its own sha256 — unlike `cat files > combined.md`, whose
+hash pins nothing you could name. A single file is read byte for byte, exactly
+as before.
+
+```bash
+lens shape app/models/concerns/ docs/patterns.md --output ./codebase-lens --name codebase-lens
+```
+
 ### What lens does NOT do (yet)
 
-- Multi-file corpora (workaround: `cat files > combined.md` first)
 - PDF or EPUB extraction (use a pre-processor; the [agent training program](https://github.com/codenamev/agent-training-program) ships `epub_to_md.rb` and `ocw_to_md.rb` for those)
 - Auto-publishing to a marketplace
-- Quality eval / re-cast loop
+- Quality eval / re-cast loop (`bin/eval` measures the *format* half — item count, conformance, run-to-run stability — so a prompt change can say what moved; faithfulness to the source still needs a reader)
 - Composition of multiple corpora into a single lens
 
 ## Why this exists
@@ -101,6 +114,8 @@ Lens::Shape          # single LLM call with RFC-2119 framing
     │
     ▼
 Lens::Validator      # agentskills.io constraints (name, description)
+Lens::Description    # default description derived from the body's trigger clauses
+    │                # (Lens::Checklist scores the body's format off to the side; bin/eval uses it)
     │
     ▼
 Lens::SkillWriter    # writes SKILL.md + docs/PROVENANCE.md

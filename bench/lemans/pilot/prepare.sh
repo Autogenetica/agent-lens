@@ -5,7 +5,8 @@
 #
 # baseline/tasks  <- byte-for-byte copy of ai-evals/tasks
 # lensed/tasks    <- lensify.rb output (lens SKILL.md prepended to instruction.md)
-# vocab/tasks     <- lensify.rb output with lens-vocab/SKILL.md (API names removed)
+# vocab/tasks     <- lensify.rb output with lens-vocab/SKILL.md (API names removed; the run-3 arm)
+# control/tasks   <- lensify.rb output with control/LENS.md (vocabulary control; gated by control/check.rb)
 # process/tasks   <- lensify.rb output with lens-process/SKILL.md (Testing Guide, run 4)
 # app/tasks       <- lensify.rb output with lens-app/SKILL.md (Writebook codebase, run 4)
 # */docker        <- copy of ai-evals/docker (the Dockerfile bench.yml points at)
@@ -21,7 +22,9 @@ shift || true
 
 [ -f "$ai_evals/bench.yml" ] || { echo "no ai-evals checkout at $ai_evals" >&2; exit 1; }
 
-rm -rf "$here/baseline/tasks" "$here/lensed/tasks" "$here/vocab/tasks" "$here/process/tasks" "$here/app/tasks"
+ruby "$here/control/check.rb" "$ai_evals"
+
+rm -rf "$here/baseline/tasks" "$here/lensed/tasks" "$here/vocab/tasks" "$here/control/tasks" "$here/process/tasks" "$here/app/tasks"
 mkdir -p "$here/baseline/tasks"
 
 if [ $# -gt 0 ]; then
@@ -38,8 +41,10 @@ ruby "$lemans_dir/lensify.rb" --lens "$lemans_dir/lens-process/SKILL.md" \
   --tasks "$ai_evals/tasks" --out "$here/process/tasks" "$@"
 ruby "$lemans_dir/lensify.rb" --lens "$lemans_dir/lens-app/SKILL.md" \
   --tasks "$ai_evals/tasks" --out "$here/app/tasks" "$@"
+ruby "$lemans_dir/lensify.rb" --lens "$here/control/LENS.md" \
+  --tasks "$ai_evals/tasks" --out "$here/control/tasks" "$@"
 
-for arm in baseline lensed vocab process app; do
+for arm in baseline lensed vocab control process app; do
   rm -rf "$here/$arm/docker"
   cp -R "$ai_evals/docker" "$here/$arm/docker"
 done
@@ -47,5 +52,6 @@ done
 echo "baseline: $(ls "$here/baseline/tasks" | wc -l | tr -d ' ') tasks"
 echo "lensed:   $(ls "$here/lensed/tasks" | wc -l | tr -d ' ') tasks"
 echo "vocab:    $(ls "$here/vocab/tasks" | wc -l | tr -d ' ') tasks"
+echo "control:  $(ls "$here/control/tasks" | wc -l | tr -d ' ') tasks"
 echo "process:  $(ls "$here/process/tasks" | wc -l | tr -d ' ') tasks"
 echo "app:      $(ls "$here/app/tasks" | wc -l | tr -d ' ') tasks"

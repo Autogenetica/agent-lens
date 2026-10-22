@@ -64,3 +64,21 @@ number.
 Start at [PILOT-SUMMARY.md](PILOT-SUMMARY.md): the verdict, the run
 table, the harness lessons, and what survives. Per-run notes are
 `RESULTS-<date>.md`; the gate replays are under `replay/`.
+
+## Control arm (run 2)
+
+`control/LENS.md` is the vocabulary control: the same fifteen checks, rewritten
+so no Rails API name, method, option, or constant appears, at ±5% of the lens's
+word count under the same skill preamble. `control/check.rb` is the leakage
+gate (the 21 task anchors plus every backticked identifier in the real lens,
+plus an identifier-shape regex); `prepare.sh` runs it before building
+`control/tasks` and refuses to build on a leak or a size miss. Read the
+three-arm readout with:
+
+```sh
+ruby bench/lemans/pilot/reach.rb control=bench/lemans/pilot/control/runs
+```
+
+If control tracks baseline, the lens's effect is the vocabulary (the API names
+themselves). If control tracks lensed, the effect is the checklist and the
+vocabulary is decoration.

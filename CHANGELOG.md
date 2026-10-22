@@ -6,6 +6,25 @@ project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- `Lens::Description`: the default `SKILL.md` description is now derived
+  from the cast body's own `if X, have you Y?` trigger clauses ("Use when
+  the conversation involves X1; X2; ..."), capped under the 1024-char spec
+  limit, with the framing appended. Deterministic, no second LLM call, no
+  prompt change; `--description` still overrides and bodies with no
+  parseable clause fall back to the previous name-and-framing text (#19).
+- `Lens::Checklist`: a deterministic structural scorer for a cast body
+  against the format `EXTRACTION_PROMPT` demands (10-15 numbered items, each
+  with a bold name, a `MUST verify:` marker, an `if X, have you Y?`
+  conditional, and no source citation). No I/O, no LLM; it does not change
+  what `lens shape` writes.
+- `bin/eval`: a manual before/after instrument. Captures N completions per
+  corpus into a gitignored `eval/<prompt-sha>/` and `--compare`s two capture
+  directories on item count, conformance, misses, and item-name overlap. The
+  first Direction bullet in WORLD.md ("the proposal says what moved") now has
+  a number to quote (#15).
+
 ### Changed
 
 - Ruby 4.0 is now the minimum supported version (`required_ruby_version`
@@ -15,12 +34,23 @@ project uses [Semantic Versioning](https://semver.org/).
   SHA-256 of its content instead of the absolute path typed at cast time.
   The hash pins the exact source wherever it lived; the path shipped the
   author's filesystem layout inside every published skill (#7).
+- `lens shape` now refuses, before the LLM call, when the basename of
+  `--output` differs from `--name`. agentskills.io requires SKILL.md name to
+  equal its parent directory; the validator left that to the caller and no
+  caller checked it, so a mismatched invocation wrote a skill that
+  `skills-ref validate` rejects (#16).
 
 ## [0.1.0] — 2026-06-11
 
 Initial release.
 
 ### Added
+
+- `lens shape` accepts multiple files and directories. `Lens::Corpus.gather`
+  expands directories to `*.md` / `*.markdown` / `*.txt`, concatenates with
+  a per-file boundary marker, and `docs/PROVENANCE.md` records each file's
+  basename, sha256 and size; the `source-corpus` frontmatter value becomes
+  `first.md (+N files)`. A single file is byte-for-byte unchanged (#17).
 
 - `lens shape CORPUS_PATH` — single subcommand that reads an opinionated
   corpus (book, course transcript, codebase canonical files, internal SOP),
