@@ -60,9 +60,22 @@ or publish it to a marketplace.
 | `--model` | no | LLM model for extraction (default: `claude-sonnet-4-6`) |
 | `--env-file` | no | Path to a `.env` file to load (default: `./.env`) |
 
+### Multi-file corpora
+
+`lens shape` takes any number of files and directories. Directories expand
+to their `*.md` / `*.markdown` / `*.txt` files, sorted by path. With more
+than one file, each file is preceded by a visible boundary marker
+(`<!-- source file 2 of 5: models.md -->`) and `docs/PROVENANCE.md` lists
+every file with its own sha256 — unlike `cat files > combined.md`, whose
+hash pins nothing you could name. A single file is read byte for byte, exactly
+as before.
+
+```bash
+lens shape app/models/concerns/ docs/patterns.md --output ./codebase-lens --name codebase-lens
+```
+
 ### What lens does NOT do (yet)
 
-- Multi-file corpora (workaround: `cat files > combined.md` first)
 - PDF or EPUB extraction (use a pre-processor; the [agent training program](https://github.com/codenamev/agent-training-program) ships `epub_to_md.rb` and `ocw_to_md.rb` for those)
 - Auto-publishing to a marketplace
 - Quality eval / re-cast loop
