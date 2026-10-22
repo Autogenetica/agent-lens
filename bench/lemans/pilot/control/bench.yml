@@ -1,0 +1,54 @@
+# Pilot bench: CONTROL arm (vocabulary control). Same profile as the Rails Foundation's
+# ai-evals/bench.yml (Writebook image, miniswen-installed, 90m/400 steps)
+# with three deliberate changes, all mirrored in ../lensed/bench.yml:
+#
+#   1. model  -> Haiku 4.5 over the Anthropic API directly (ANTHROPIC_API_KEY),
+#                not OpenRouter. Cheapest model that still exercises the lens.
+#   2. hosts  -> api.anthropic.com only.
+#   3. cost   -> $0.60 per trial, from the Fable run's ~$0.55/call shape.
+#                126 trials (42 tasks x 3 attempts) caps at ~$75 by config;
+#                the pilot ceiling Minerva estimated is $65, so stop at -k 3 and watch
+#                `lemans report` cost after the first task sweep.
+#
+# tasks/ here are the lensify.rb output with control/LENS.md instead of the real
+# lens: the same 15 checks in Rails prose with every API name removed (see
+# control/README.md). If this arm reads like baseline the lens works by
+# vocabulary; if it reads like lensed it works as a checklist.
+# (instruction.md carries the control text
+# lens ahead of the original task). tasks/ and docker/ are NOT committed:
+# them from a local ai-evals checkout. The ai-evals repo asks that its task
+# data never land in a training corpus, and a second public copy is the
+# opposite of that.
+
+version: 1
+
+environment:
+  dockerfile: docker/writebook/Dockerfile
+  resources:
+    cpus: 2
+    memory: 2GB
+    storage: 5GB
+  build_timeout: 30m
+  network:
+    mode: public # open during setup only, to install miniswen (as upstream)
+
+agent:
+  name: miniswen-installed
+  model: anthropic/claude-haiku-4-5-20251001
+  timeout: 90m
+  step_limit: 400
+  cost_limit: 0.60
+  exec_timeout: 300
+  environment:
+    network:
+      mode: allowlist
+      hosts: [api.anthropic.com]
+
+verifier:
+  timeout: 10m
+  command: ruby -Itest -report-lemans /tests/verification_test.rb
+  preverify: bin/rails test
+  restore:
+    - test
+    - bin
+    - config/environments/test.rb

@@ -28,12 +28,23 @@ project uses [Semantic Versioning](https://semver.org/).
   SHA-256 of its content instead of the absolute path typed at cast time.
   The hash pins the exact source wherever it lived; the path shipped the
   author's filesystem layout inside every published skill (#7).
+- `lens shape` now refuses, before the LLM call, when the basename of
+  `--output` differs from `--name`. agentskills.io requires SKILL.md name to
+  equal its parent directory; the validator left that to the caller and no
+  caller checked it, so a mismatched invocation wrote a skill that
+  `skills-ref validate` rejects (#16).
 
 ## [0.1.0] — 2026-06-11
 
 Initial release.
 
 ### Added
+
+- `lens shape` accepts multiple files and directories. `Lens::Corpus.gather`
+  expands directories to `*.md` / `*.markdown` / `*.txt`, concatenates with
+  a per-file boundary marker, and `docs/PROVENANCE.md` records each file's
+  basename, sha256 and size; the `source-corpus` frontmatter value becomes
+  `first.md (+N files)`. A single file is byte-for-byte unchanged (#17).
 
 - `lens shape CORPUS_PATH` — single subcommand that reads an opinionated
   corpus (book, course transcript, codebase canonical files, internal SOP),
