@@ -25,7 +25,7 @@ module Lens
       puts "agent-lens #{Lens::VERSION}"
     end
 
-    desc "shape CORPUS_PATH",
+    desc "shape CORPUS_PATH [CORPUS_PATH...]",
          "Shape an Agent Skill from a corpus of opinionated content"
     long_desc <<~LONGDESC
       Shape an agentskills.io-compliant Agent Skill from a corpus.
@@ -60,18 +60,36 @@ module Lens
                    desc: "LLM model to use for extraction"
     option :env_file, type: :string,
                       desc: "Path to a .env file to load (defaults to ./.env)"
-    def shape(corpus_path)
+    def shape(*corpus_paths)
       load_env(options[:env_file])
 
-      unless File.exist?(corpus_path)
-        say_error "Corpus file not found: #{corpus_path}"
+      if corpus_paths.empty?
+        say_error "Usage: lens shape CORPUS_PATH [CORPUS_PATH...] --output DIR --name NAME"
         exit 1
       end
 
       Validator.validate_name!(options[:name])
 
-      corpus = File.read(corpus_path)
-      say_status :reading, "#{corpus_path} (#{corpus.length} chars)"
+      # agentskills.io: name MUST match the parent directory name. The
+      # validator leaves this to the caller, so check it here, before the
+      # LLM call, so a typo does not cost a 30-90s completion.
+      output_basename = File.basename(File.expand_path(options[:output]))
+      if output_basename != options[:name]
+        say_error "Invalid skill metadata: --output directory name (#{output_basename.inspect}) " \
+                  "must match --name (#{options[:name].inspect}); the spec requires SKILL.md " \
+                  "name to equal its parent directory"
+        exit 1
+      end
+
+      gathered = Corpus.gather(corpus_paths)
+      corpus = gathered[:text]
+      files = gathered[:files]
+      if files.size == 1
+        say_status :reading, "#{files.first.path} (#{corpus.length} chars)"
+      else
+        say_status :reading, "#{files.size} files (#{corpus.length} chars)"
+        files.each { |f| say_status :file, "#{f.path} (#{f.bytes} bytes)" }
+      end
 
       shaper = Shape.new(
         corpus: corpus,
@@ -82,7 +100,8 @@ module Lens
       say_status :shaping, "single-call extraction with #{options[:model]} (this may take 30–90s)"
       body = shaper.cast
 
-      description = options[:description] || derive_description(options[:name], options[:framing])
+      description = options[:description] ||
+                    Description.derive(name: options[:name], body: body, framing: options[:framing])
       Validator.validate_description!(description)
 
       writer = SkillWriter.new(
@@ -92,8 +111,9 @@ module Lens
         body: body,
         license: options[:license],
         framing: options[:framing],
-        source_path: corpus_path,
-        source_sha256: Digest::SHA256.hexdigest(corpus),
+        source_path: files.first.path,
+        source_sha256: files.first.sha256,
+        source_files: files,
         model: options[:model]
       )
 
@@ -101,11 +121,14 @@ module Lens
       say_status :wrote, paths[:skill_path]
       say_status :wrote, paths[:provenance_path]
       say ""
-      say "Shaped #{options[:name]} from #{File.basename(corpus_path)}."
+      say "Shaped #{options[:name]} from #{files.size == 1 ? files.first.basename : "#{files.size} files"}."
       say "Next: review the SKILL.md body for faithfulness, then publish to a"
       say "marketplace or drop into ~/.claude/skills/#{options[:name]}/ to load locally."
     rescue Validator::InvalidName, Validator::InvalidDescription => e
       say_error "Invalid skill metadata: #{e.message}"
+      exit 1
+    rescue Corpus::Missing, Corpus::Empty => e
+      say_error e.message
       exit 1
     end
 
@@ -114,19 +137,6 @@ module Lens
     def load_env(path)
       env_file = path || File.expand_path(".env", Dir.pwd)
       Dotenv.load(env_file) if File.exist?(env_file)
-    end
-
-    # Default description used when --description isn't provided. Kept short
-    # and safely under the 1024-char cap; user should override for production
-    # skills they intend to publish.
-    def derive_description(name, framing)
-      readable = name.split("-").map(&:capitalize).join(" ")
-      context = framing || "the relevant domain"
-      "#{readable} skill — a pre-response verification checklist applied when " \
-        "the user's conversation falls within the trigger conditions of any " \
-        "listed item. Use this skill whenever the agent is acting as #{context}, " \
-        "even when the user doesn't name the underlying patterns explicitly. " \
-        "(Auto-generated description; override with --description for publication.)"
     end
 
     def say_status(status, message)

@@ -6,3 +6,5 @@ lensed/docker/
 */runs/
 vocab/tasks/
 vocab/docker/
+control/tasks/
+control/docker/

@@ -4,6 +4,7 @@ require_relative "test_helper"
 require "minitest/mock"
 require "tmpdir"
 require "fileutils"
+require "digest"
 
 # Exercises Lens::CLI without a network call. Everything up to Shape#cast is
 # pure argument handling and short-circuits; the success path stubs
@@ -24,7 +25,8 @@ class LensCLITest < Minitest::Test
     @tmp = Dir.mktmpdir("lens-cli-test-")
     @corpus = File.join(@tmp, "corpus-notes.md")
     File.write(@corpus, "# Notes\n\nPrefer small objects over clever ones.\n")
-    @output = File.join(@tmp, "shaped-skill")
+    # Basename must equal --name: the spec requires SKILL.md name == parent dir.
+    @output = File.join(@tmp, "corpus-notes")
     # Every shape invocation points --env-file at a private file so the test
     # never loads a developer's real ./.env into the process.
     @env_file = File.join(@tmp, "test.env")
@@ -105,6 +107,27 @@ class LensCLITest < Minitest::Test
     refute File.exist?(@output)
   end
 
+  def test_shape_rejects_output_basename_that_differs_from_name_before_shaping
+    Lens::Shape.stub(:new, ->(**) { flunk "Shape.new should not be called" }) do
+      status, out, = run_cli("shape", @corpus, "--output", File.join(@tmp, "shaped-skill"),
+                             "--name", "corpus-notes", "--env-file", @env_file)
+
+      assert_equal 1, status
+      assert_match(/"shaped-skill"/, out)
+      assert_match(/must match --name \("corpus-notes"\)/, out)
+    end
+    refute File.exist?(File.join(@tmp, "shaped-skill"))
+  end
+
+  def test_shape_accepts_output_with_trailing_slash_matching_name
+    with_fake_shaper do
+      status, = run_cli(*shape_args.tap { |a| a[a.index("--output") + 1] = "#{@output}/" })
+
+      assert_equal 0, status
+    end
+    assert_match(/^name: corpus-notes$/, File.read(File.join(@output, "SKILL.md")))
+  end
+
   def test_shape_rejects_over_long_description_after_shaping
     with_fake_shaper do
       status, out, = run_cli(*shape_args("--description", "a" * 1025))
@@ -143,6 +166,41 @@ class LensCLITest < Minitest::Test
     assert_match(/\*\*Framing:\*\* `a test pilot`/, provenance)
   end
 
+  def test_shape_gathers_multiple_files_with_markers_and_per_file_provenance
+    second = File.join(@tmp, "more-notes.md")
+    File.write(second, "# More\n\nName the trade-off.\n")
+
+    received = with_fake_shaper do
+      status, out, = run_cli("shape", @corpus, second, "--output", @output,
+                             "--name", "corpus-notes", "--env-file", @env_file)
+
+      assert_equal 0, status
+      assert_match(/reading\s+2 files \(\d+ chars\)/, out)
+      assert_match(/Shaped corpus-notes from 2 files\./, out)
+    end
+
+    assert_includes received[:corpus], "<!-- source file 1 of 2: corpus-notes.md -->"
+    assert_includes received[:corpus], "<!-- source file 2 of 2: more-notes.md -->"
+    assert_includes received[:corpus], "Name the trade-off."
+
+    skill = File.read(File.join(@output, "SKILL.md"))
+    assert_match(/^  source-corpus: "corpus-notes\.md \(\+1 file\)"$/, skill)
+
+    provenance = File.read(File.join(@output, "docs", "PROVENANCE.md"))
+    assert_match(/\*\*Source corpus:\*\* 2 files, concatenated in this order:/, provenance)
+    assert_match(/1\. `corpus-notes\.md` \(sha256: `#{Digest::SHA256.file(@corpus).hexdigest}`, \d+ bytes\)/, provenance)
+    assert_match(/2\. `more-notes\.md` \(sha256: `#{Digest::SHA256.file(second).hexdigest}`, \d+ bytes\)/, provenance)
+    refute_includes provenance, @tmp, "provenance must not leak the source directory"
+  end
+
+  def test_shape_with_no_corpus_path_exits_1
+    status, out, = run_cli("shape", "--output", @output, "--name", "corpus-notes",
+                                "--env-file", @env_file)
+
+    assert_equal 1, status
+    assert_match(/Usage: lens shape CORPUS_PATH/, out)
+  end
+
   def test_shape_passes_model_option_through
     received = with_fake_shaper do
       run_cli(*shape_args("--model", "some-other-model"))
@@ -152,7 +210,7 @@ class LensCLITest < Minitest::Test
     assert_match(/^  model: "some-other-model"$/, File.read(File.join(@output, "SKILL.md")))
   end
 
-  def test_shape_derives_description_from_name_and_framing
+  def test_shape_derives_description_from_body_triggers_and_framing
     with_fake_shaper { run_cli(*shape_args("--framing", "a test pilot")) }
 
     skill = File.read(File.join(@output, "SKILL.md"))
@@ -160,17 +218,19 @@ class LensCLITest < Minitest::Test
 
     refute_nil description
     assert_match(/\ACorpus Notes skill/, description)
+    assert_includes description, "Use when the conversation involves testing."
     assert_includes description, "acting as a test pilot"
-    assert_includes description, "Auto-generated description"
+    assert_includes description, "Auto-generated from the checklist's trigger clauses"
     assert_operator description.length, :<=, Lens::Validator::DESCRIPTION_MAX
   end
 
-  def test_shape_derived_description_falls_back_without_framing
+  def test_shape_derived_description_omits_framing_clause_without_framing
     with_fake_shaper { run_cli(*shape_args) }
 
     description = File.read(File.join(@output, "SKILL.md"))[/^description: "(.*)"$/, 1]
 
-    assert_includes description, "acting as the relevant domain"
+    assert_includes description, "Use when the conversation involves testing."
+    refute_includes description, "acting as"
   end
 
   def test_shape_uses_explicit_description_verbatim
